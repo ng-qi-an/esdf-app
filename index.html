@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />    
+    <title>ESDF | Settings</title>
+    <style type="text/tailwindcss">
+        /* @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #1e1e1e;
+                color: #ffffff;
+            }
+        } */
+    </style>
+    <script>
+        // Set theme based on system preference
+        const theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.classList.add(theme);
+    </script>
+</head>
+<body class="py-8 px-6 h-full flex flex-col overflow-auto">
+    <h1 class="text-3xl font-semibold mb-4">Settings</h1>
+    <div class="flex flex-col md:flex-row gap-4 w-full max-w-5xl h-full">
+        <div class="flex flex-col gap-3 w-full lg:max-w-[400px] md:max-w-[300px] h-max">
+            <fieldset class="fieldset bg-base-200 border-base-300 rounded-box w-full border p-4">
+                <legend class="fieldset-legend">App settings</legend>
+                <label class="label">Run on startup</label>
+                <select class="select w-full">
+                    <option>On</option>
+                    <option selected>Off</option>
+                </select>
+                <label class="label">Enabled</label>
+                <select class="select w-full">
+                    <option>Always</option>
+                    <option selected>On selected games</option>
+                    <option>Manually</option>
+                </select>
+            </fieldset>
+            <fieldset class="fieldset bg-base-200 border-base-300 rounded-box w-full border p-4">
+                <legend class="fieldset-legend">Selected games</legend>
+                <div>
+                    <label class="label w-full">
+                        <input type="checkbox" checked="checked" class="checkbox" />
+                        <span class="text-sm text-black dark:text-white ml-1">Roblox</span>
+                    </label>
+                </div>
+            </fieldset>
+        </div>
+        <fieldset class="fieldset bg-base-200 border-base-300 rounded-box w-full border p-4 md:h-max md:max-h-full md:overflow-auto">
+            <legend class="fieldset-legend">Keybind presets</legend>
+                <div class="collapse collapse-arrow bg-base-100 border border-base-300">
+                    <input type="checkbox" name="my-accordion-2" checked="checked" />
+                    <div class="collapse-title font-semibold flex items-center relative text-sm">ESDF <button class="btn btn-primary btn-sm absolute z-20 right-11">Activated</button></div>
+                    <div class="collapse-content text-sm mt-2 flex flex-col">
+                        <div class="w-full flex gap-4 items-center">
+                            <select class="select w-full">
+                                <option selected>W</option>
+                                <option>B</option>
+                                <option>C</option>
+                            </select>
+                            <i class="fa-solid fa-arrow-right opacity-30"></i>
+                            <select class="select w-full">
+                                <option selected>E</option>
+                                <option>Off</option>
+                            </select>
+                        </div>
+                        <div class="flex mt-4 justify-end">
+                            <button class="btn btn-sm w-max">Rename</button>
+                            <button class="btn btn-sm w-max ml-1">New Keybind</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse collapse-arrow bg-base-100 border border-base-300">
+                    <input type="checkbox" name="my-accordion-2" checked="checked" />
+                    <div class="collapse-title font-semibold flex items-center relative text-sm">ESDF <button class="btn btn-sm absolute z-20 right-11">Activate</button></div>
+                    <div class="collapse-content text-sm">Click the "Sign Up" button in the top right corner and follow the registration process.</div>
+                </div>
+                <button class="btn btn-sm btn-primary mt-2 w-max ml-auto">New Preset</button>
+        </fieldset>
+    </div>
+</body>
+</html>
