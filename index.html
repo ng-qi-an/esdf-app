@@ -23,38 +23,195 @@
         const theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         document.documentElement.setAttribute('data-theme', theme);
         document.documentElement.classList.add(theme);
-        window.addEventListener("pywebviewready", function(){
-            console.log("Pywebview is ready");
-            console.log(pywebview.api)
-            pywebview.api.version().then(response => {
-                console.log(response.message);
-            });
-            document.getElementById("before-loading").style.display = "none";
-            document.getElementById("dashboard-panel").style.display = "block";
+        const gamesList = [{name: "Roblox", "exe": "RobloxPlayerBeta.exe"}]
+
+        const state = proxy({
+            settings: {}
         })
 
-        
-        const state = proxy({
-            count: 0,
-            settings: {
-                runOnStartup: false,
-                enabled: 'selectedGames',
+        function loadPresets(data){
+            console.log("Presets loaded", data)
+            // Iterate through presets and create the preset ui
+            document.getElementById("presetsList").innerHTML = ""
+            const characterList = 'abcdefghijklmnopqrstuvwxyz'.toUpperCase().split('');
+            function savePresetKey(e){
+                const id = e.target.id.split("-")
+                const pIndex = parseInt(id[1])
+                const kIndex = parseInt(id[2])
+                const type = id[3]
+                console.log(`Preset ${pIndex} Keybind ${kIndex} ${type} changed to ${e.target.value}`)
+                state.settings.presets[pIndex].keys[kIndex][type] = e.target.value
+                saveSettings()
             }
-        })
+            data.forEach((preset, pIndex) => {
+                // Add preset to presetsList
+                document.getElementById("presetsList").innerHTML += `
+                <div class="collapse collapse-arrow bg-base-100 border border-base-300 mb-1" id="preset-${pIndex}">
+                    <input type="checkbox" name="presets-accordion" ${preset.active ? "checked" : ""} />
+                    <div class="collapse-title font-semibold flex items-center relative text-sm">${preset.name}<button class="btn ${preset.active ? "btn-primary" : ""} btn-sm absolute z-20 right-11" id="preset-${pIndex}-activate">${preset.active ? "Activated" : "Activate"}</button></div>
+                    <div class="collapse-content text-sm mt-2 flex flex-col gap-2">
+                        ${preset.keys.map((keybind, kIndex) =>`
+                            <div class="w-full flex gap-4 items-center">
+                                <select class="select w-full" id="keybind-${pIndex}-${kIndex}-src">
+                                    <option disabled ${!keybind.src && "selected"}>Select key</option>
+                                    ${characterList.map(char => `
+                                        <option ${keybind.src === char ? 'selected' : ''} value=${char}>${char}</option>
+                                    `).join('')}
+                                </select>
+                                <i class="fa-solid fa-arrow-right opacity-30"></i>
+                                <select class="select w-full" id="keybind-${pIndex}-${kIndex}-dst">
+                                    <option disabled ${!keybind.dst && "selected"}>Select key</option>
+                                    ${characterList.map(char => `
+                                        <option ${keybind.dst === char ? 'selected' : ''} value=${char}>${char}</option>
+                                    `).join('')}
+                                </select>
+                                <button class="btn btn-sm btn-square btn-ghost" id="keybind-${pIndex}-${kIndex}-delete">
+                                    <i class="fa-solid fa-xmark opacity-50"></i>
+                                </button>
+                            </div>`
+                        ).join('')}
+                        <div class="flex mt-4 justify-end">
+                            <button class="btn btn-sm w-max" id="preset-${pIndex}-rename">Rename</button>
+                            <button class="btn btn-sm w-max ml-1" id="preset-${pIndex}-delete">Delete</button>
+                            <button class="btn btn-sm w-max ml-1" id="preset-${pIndex}-new-keybind">New Keybind</button>
+                        </div>
+                    </div>
+                </div>`
+            })
+            data.forEach((preset, pIndex) => {
+                // Add event listeners for preset buttons and keybind selects
+                console.log("Adding event listeners for preset", pIndex)
+                preset.keys.forEach((keybind, kIndex) => {
+                    document.getElementById(`keybind-${pIndex}-${kIndex}-src`).addEventListener("change", savePresetKey)
+                    document.getElementById(`keybind-${pIndex}-${kIndex}-dst`).addEventListener("change", savePresetKey)
+                    document.getElementById(`keybind-${pIndex}-${kIndex}-delete`).onclick = (() => {
+                        if (confirm("Are you sure you want to delete this keybind?")){
+                            state.settings.presets[pIndex].keys.splice(kIndex, 1)
+                            loadPresets(state.settings.presets)
+                            saveSettings()
+                        }
+                    })
+                })
+                document.getElementById(`preset-${pIndex}-activate`).onclick = (() => {
+                    state.settings.presets.forEach((p, i) => {
+                        if (i == pIndex){
+                            p.active = true
+                        } else {
+                            p.active = false
+                        }
+                    })
+                    loadPresets(state.settings.presets)
+                    saveSettings()
+                })
+                document.getElementById(`preset-${pIndex}-rename`).onclick = (() => {
+                    const newName = prompt("Enter new preset name", preset.name)
+                    if (newName && newName.trim().length > 0){
+                        state.settings.presets[pIndex].name = newName
+                        loadPresets(state.settings.presets)
+                        saveSettings()
+                    }
+                })
+                document.getElementById(`preset-${pIndex}-delete`).onclick = (() => {
+                    if (confirm("Are you sure you want to delete this preset?")){
+                        state.settings.presets.splice(pIndex, 1)
+                        loadPresets(state.settings.presets)
+                        saveSettings()
+                    }
+                })
+                document.getElementById(`preset-${pIndex}-new-keybind`).onclick = (() => {
+                    state.settings.presets[pIndex].keys.push({src: "", dst: ""})
+                    loadPresets(state.settings.presets)
+                    saveSettings()
+                })
+                console.log(`Preset ${pIndex} event listeners added`)
+            })
+        }
+
+        // Subscribe to state changes
         subscribe(state, () => {
-            console.log(`Count changed to ${state.count}`)
+            console.log("Settings changed", state.settings)
+            document.getElementById("startupSelect").value = state.settings.runOnStartup ? "on" : "off"
+            document.getElementById("enabledSelect").value = state.settings.enabled
         })
-        document.getElementById("newPreset").addEventListener("click", () => {
-            state.count += 1
+
+        // Load initial settings from API when pywebview is ready
+        window.addEventListener("pywebviewready", function(){
+            console.log("Pywebview is ready");
+            pywebview.api.getConfig().then(response => {
+                // Interate through games and create checkbox events
+                document.getElementById("gamesList").innerHTML = ""
+                gamesList.forEach(game => {
+                    // Add checkbox for each game
+                    document.getElementById("gamesList").innerHTML += `
+                        <label class="label w-full">
+                            <input type="checkbox" class="checkbox" ${response.selectedGames.includes(game.exe) ? 'checked="checked"' : ''} id="game-${game.exe}" />
+                            <span class="text-sm text-black dark:text-white ml-1">${game.name}</span>
+                        </label>
+                    `;
+                    
+                    // Add event listener for checkbox change
+                    document.getElementById(`game-${game.exe}`).addEventListener("change", (event) => {
+                        if (event.target.checked){
+                            if (!state.settings.selectedGames.includes(game.exe)){
+                                state.settings.selectedGames.push(game.exe)
+                            }
+                        } else {
+                            state.settings.selectedGames = state.settings.selectedGames.filter(exe => exe !== game.exe)
+                        }
+                        saveSettings()
+                    })
+                })
+
+                loadPresets(response.presets)
+
+                // Save initial settings to the state and remove loading
+                state.settings = response;
+                document.getElementById("before-loading").style.display = "none";
+                document.getElementById("dashboard-panel").style.display = "block";
+            }).catch((e)=>{
+                alert("An error occurred while loading settings. Please restart the application.")
+                console.error("Error loading config", e)
+            })
         })
+
+        // Event listeners for settings changes
         document.getElementById("startupSelect").addEventListener("change", (event) => {
             state.settings.runOnStartup = event.target.value === "on" ? true : false
-            console.log(state.settings)
+            pywebview.api.setStartup(event.target.value === "on" ? true : false)
+            saveSettings()
         })
+
         document.getElementById("enabledSelect").addEventListener("change", (event) => {
             state.settings.enabled = event.target.value
-            console.log(state.settings)
+            saveSettings()
         })
+
+        document.getElementById(`newPreset`).onclick = (() => {
+            const presetName = prompt("Enter preset name", "New Preset")
+            if (presetName && presetName.trim().length > 0){
+                state.settings.presets.push({name: "New Preset", active: false, keys: [{
+                    src: "",
+                    dst: ""
+                }]})
+                loadPresets(state.settings.presets)
+                saveSettings()
+            }
+        })
+
+
+        // Function to save settings via API
+        function saveSettings(){
+            pywebview.api.saveSettings(state.settings).then((response) => {
+                if (response.status == "success"){
+                    console.log("Settings saved", response)
+                } else {
+                    console.error("Failed to save settings", response)
+                }
+            }).catch((e)=>{
+                alert("An error occurred while saving settings. Please try again.")
+                console.error("Error saving settings", e)
+            })
+        }
     </script>
 </head>
 <body class="py-8 px-6 h-screen flex flex-col overflow-auto">
@@ -81,7 +238,7 @@
                 </fieldset>
                 <fieldset class="fieldset bg-base-200 border-base-300 rounded-box w-full border p-4">
                     <legend class="fieldset-legend">Selected games</legend>
-                    <div>
+                    <div id="gamesList">
                         <label class="label w-full">
                             <input type="checkbox" checked="checked" class="checkbox" />
                             <span class="text-sm text-black dark:text-white ml-1">Roblox</span>
@@ -91,34 +248,15 @@
             </div>
             <fieldset class="fieldset bg-base-200 border-base-300 rounded-box w-full border p-4 md:h-max md:max-h-full md:overflow-auto">
                 <legend class="fieldset-legend">Keybind presets</legend>
-                    <div class="collapse collapse-arrow bg-base-100 border border-base-300">
-                        <input type="checkbox" name="my-accordion-2" checked="checked" />
-                        <div class="collapse-title font-semibold flex items-center relative text-sm">ESDF <button class="btn btn-primary btn-sm absolute z-20 right-11">Activated</button></div>
-                        <div class="collapse-content text-sm mt-2 flex flex-col">
-                            <div class="w-full flex gap-4 items-center">
-                                <select class="select w-full">
-                                    <option selected>W</option>
-                                    <option>B</option>
-                                    <option>C</option>
-                                </select>
-                                <i class="fa-solid fa-arrow-right opacity-30"></i>
-                                <select class="select w-full">
-                                    <option selected>E</option>
-                                    <option>Off</option>
-                                </select>
-                            </div>
-                            <div class="flex mt-4 justify-end">
-                                <button class="btn btn-sm w-max">Rename</button>
-                                <button class="btn btn-sm w-max ml-1">New Keybind</button>
-                            </div>
-                        </div>
-                    </div>
+                <div id="presetsList">
+                    
                     <div class="collapse collapse-arrow bg-base-100 border border-base-300">
                         <input type="checkbox" name="my-accordion-2" checked="checked" />
                         <div class="collapse-title font-semibold flex items-center relative text-sm">ESDF <button class="btn btn-sm absolute z-20 right-11">Activate</button></div>
                         <div class="collapse-content text-sm">Click the "Sign Up" button in the top right corner and follow the registration process.</div>
                     </div>
-                    <button class="btn btn-sm btn-primary mt-2 w-max ml-auto" id="newPreset">New Preset</button>
+                </div>
+                <button class="btn btn-sm btn-primary mt-2 w-max ml-auto" id="newPreset">New Preset</button>
             </fieldset>
         </div>
     </div>

@@ -1,9 +1,12 @@
 import multiprocessing
+import threading
 import sys
 from PIL import Image, ImageDraw
 from pystray import Icon, Menu, MenuItem
 import webview
 from api import API
+from monitor import beginMonitor
+from store import checkConfig
 
 # Adapted from pywebview pystray example
 if sys.platform == 'darwin':
@@ -49,6 +52,10 @@ def on_exit(icon, item):
     icon.stop()
 
 if __name__ == '__main__':
+    
+    #threading.Thread(target=beginMonitor, daemon=True).start() # Activates the activity monitor
+    checkConfig()
+    
     menu = Menu(MenuItem('Open settings', on_open), MenuItem('Quit', on_exit))
     icon = Icon('ESDF', create_image(64, 64, 'black', 'white'), menu=menu)
     icon.run()
