@@ -1,10 +1,9 @@
 import multiprocessing
 import sys
-
 from PIL import Image, ImageDraw
 from pystray import Icon, Menu, MenuItem
-
 import webview
+from api import API
 
 # Adapted from pywebview pystray example
 if sys.platform == 'darwin':
@@ -14,8 +13,6 @@ if sys.platform == 'darwin':
 else:
     Process = multiprocessing.Process
     Queue = multiprocessing.Queue
-
-
 
 def create_image(width, height, color1, color2):
     image = Image.new('RGB', (width, height), color1)
@@ -34,12 +31,14 @@ def create_settings():
         url='index.html',
         width=900,
         height=600,
-        min_size=(400, 500)
+        min_size=(400, 400),
+        background_color='#000000',
+        js_api=API()
     )
     webview.start(debug=True)
 
-webview_process = None
 
+webview_process = None
 def on_open():
     global webview_process
     webview_process = Process(target=create_settings)
@@ -51,6 +50,6 @@ def on_exit(icon, item):
 
 if __name__ == '__main__':
     menu = Menu(MenuItem('Open settings', on_open), MenuItem('Quit', on_exit))
-    icon = Icon('Pystray', create_image(64, 64, 'black', 'white'), menu=menu)
+    icon = Icon('ESDF', create_image(64, 64, 'black', 'white'), menu=menu)
     icon.run()
     webview_process.terminate()
