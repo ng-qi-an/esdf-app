@@ -1,7 +1,9 @@
 import sys
 from store import addStartup, removeStartup, saveConfig, loadConfig
+
 class API():
-    def __init__(self):
+    def __init__(self, queue):
+        self.queue = queue
         print("API initialized")
         
     def version(self):
@@ -18,6 +20,10 @@ class API():
         config = loadConfig()
         config.update(settings)
         saveConfig(config)
+        self.queue.put({
+            "action": "saved_settings",
+            "settings": settings
+        })
         return {'status': 'success', 'settings': settings}
     
     def setStartup(self, runOnStartup):

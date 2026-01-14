@@ -10,14 +10,13 @@ config_dir.mkdir(parents=True, exist_ok=True)
 config_file = Path(config_dir, "settings.json")
 
 # Meant for adding and removing startup files
-exe_location = os.path.dirname(sys.executable)
+exe_path = sys.executable
 startup_dir = Path(appdata, r"Microsoft\Windows\Start Menu\Programs\Startup")
 bat_path = Path(startup_dir, "ESDF.bat")
 
 def addStartup():
-    if not bat_path.exists():
-        with open(bat_path, 'w') as f:
-            f.write(f'@echo off\nstart "" "{exe_location}"')
+    with open(bat_path, 'w') as f:
+        f.write(f'@echo off\nstart "" "{exe_path}"')
 
 def removeStartup():
     if bat_path.exists():
@@ -40,12 +39,50 @@ def checkConfig():
         print("[STORE] Creating default config file")
         default_config = {
             "runOnStartup": True,
-            "enabled": "selectedGames",
+            "enabledWhen": "never",
             "selectedGames": [],
-            "presets": [
-            ]
+            "presets": [{
+                "name": "ESDF",
+                "active": True,
+                "keys": [
+                    {
+                        "src": "E",
+                        "dst": "W"
+                    },
+                    {
+                        "src": "S",
+                        "dst": "A"
+                    },
+                    {
+                        "src": "D",
+                        "dst": "S"
+                    },
+                    {
+                        "src": "F",
+                        "dst": "D"
+                    },
+                    {
+                        "src": "R",
+                        "dst": "E"
+                    },
+                    {
+                        "src": "T",
+                        "dst": "R"
+                    },
+                    {
+                        "src": "Y",
+                        "dst": "T"
+                    },
+                    {
+                        "src": "W",
+                        "dst": "Q"
+                    }
+                ]
+            }]
         }
+        addStartup()
         saveConfig(default_config)
+        return default_config
     
     config = loadConfig()
     if config.get("runOnStartup", False):
@@ -53,6 +90,7 @@ def checkConfig():
     else:
         removeStartup()
     print("[STORE] Config check complete!")
+    return config
 
 if __name__ == '__main__':
     config = loadConfig()

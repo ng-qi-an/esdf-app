@@ -1,3 +1,0 @@
-
-def bindEvents(window):
-    pass
