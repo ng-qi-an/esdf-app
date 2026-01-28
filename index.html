@@ -33,7 +33,8 @@
             console.log("Presets loaded", data)
             // Iterate through presets and create the preset ui
             document.getElementById("presetsList").innerHTML = ""
-            const characterList = 'abcdefghijklmnopqrstuvwxyz'.toUpperCase().split('');
+            const specialChars = ['page up', 'page down', 'home', 'end', 'insert', 'delete', 'left shift', 'right shift', 'right alt', 'left alt']
+            const characterList = [...('abcdefghijklmnopqrstuvwxyz1234567890'.toUpperCase().split('')), ...specialChars];
             function savePresetKey(e){
                 const id = e.target.id.split("-")
                 const pIndex = parseInt(id[1])
@@ -55,14 +56,14 @@
                                 <select class="select w-full" id="keybind-${pIndex}-${kIndex}-src">
                                     <option disabled ${!keybind.src && "selected"}>Select key</option>
                                     ${characterList.map(char => `
-                                        <option ${keybind.src === char ? 'selected' : ''} value=${char}>${char}</option>
+                                        <option ${keybind.src === char ? 'selected' : ''} value="${char}">${char}</option>
                                     `).join('')}
                                 </select>
                                 <i class="fa-solid fa-arrow-right opacity-30"></i>
                                 <select class="select w-full" id="keybind-${pIndex}-${kIndex}-dst">
                                     <option disabled ${!keybind.dst && "selected"}>Select key</option>
                                     ${characterList.map(char => `
-                                        <option ${keybind.dst === char ? 'selected' : ''} value=${char}>${char}</option>
+                                        <option ${keybind.dst === char ? 'selected' : ''} value="${char}">${char}</option>
                                     `).join('')}
                                 </select>
                                 <button class="btn btn-sm btn-square btn-ghost" id="keybind-${pIndex}-${kIndex}-delete">
